@@ -8,13 +8,13 @@
 using namespace std;
 
 // global varibales for model
-const int n_input = 6;
+const int n_input = 7;
 const int n_output = 3;
 const int n_hidden = 50;
-const int population_size = 200;
+const int population_size = 25;
 const float natural_selection_ratio = 0.2;
 const float mutation_rate = 0.05;
-const int generation_num = 10;
+const int generation_num = 50;
 
 static std::random_device __randomDevice;
 static std::mt19937 __randomGen(__randomDevice());
@@ -106,7 +106,7 @@ void setup()
 }
 
 // display the game
-void draw(int gen_num)
+void draw(int gen_num, int pop_num)
 {
 
     system("clear");
@@ -165,7 +165,7 @@ void draw(int gen_num)
     cout<< UNDL(FRED("Score:")) <<score<<"\t"<<endl; 
 
     // cout<< FMAG("hi");
-	cout<<"Generartion number: "<<gen_num+1<<endl;
+	cout<<"Generartion number: "<<gen_num+1<<"\tPopulation number: "<<pop_num<<endl;
     cout<<x<<" "<<y<<" : "<<fruitx<<" "<<fruity<<" : "<<tailx[ntail-1]<<" "<<taily[ntail-1]<<endl;
  
 }
@@ -266,20 +266,20 @@ int logic()
         //     break;
     }
 
-	if((dir == UP && last_dir == DOWN) || (dir == DOWN && last_dir == UP)){
-		gameover = true;
-		return -1000;
-	}
-	else if((dir == LEFT && last_dir == RIGHT) || (dir == RIGHT && last_dir == LEFT)){
-		gameover = true;
-		return -1000;
-	}
+	// if((dir == UP && last_dir == DOWN) || (dir == DOWN && last_dir == UP)){
+	// 	gameover = true;
+	// 	return -150;
+	// }
+	// else if((dir == LEFT && last_dir == RIGHT) || (dir == RIGHT && last_dir == LEFT)){
+	// 	gameover = true;
+	// 	return -150;
+	// }
 
     if(x> width || x<0 || y > height || y<0)
     {
         gameover=true;
         // cout<<"GAME OVER"<<endl;
-		return -1000;
+		return -100;
     }
 
     for(int i =0; i<ntail;i++)
@@ -288,31 +288,36 @@ int logic()
         {
             gameover = true;
             // cout<<"GAME OVER"<<endl;
-			return -1000;
+			return -100;
         }
     }
 
     if(x==fruitx && y==fruity)
     {
-        score = score +5000;
+        score = score +500;
 
 		// testing fruit position
 		fruitx = x;
 		fruity = y;
-		if(rand()%2)
-			fruitx += rand()%3;
+		int rand_num = rand();
+		if(rand_num%2)
+			fruitx = (fruitx + rand_num%3 + 1 > width) ? width : fruitx + rand_num%3 + 1;
+			// fruitx = rand()%3 + 1;
 		else
-			fruitx -= rand()%3;
+			fruitx = (fruitx - rand_num%3 - 1 < 0) ? 0 : fruitx - rand_num%3 - 1;
+			// fruitx -= rand()%3 - 1;
 		
 		if(rand()%2)
-			fruity += rand()%3;
+			fruity = (fruity + rand_num%3 + 1 > height) ? height : fruity + rand_num%3 + 1;
+			// fruity += rand()%3 + 1;
 		else
-			fruity -= rand()%3;
+			fruity = (fruity - rand_num%3 - 1 < 0) ? 0 : fruity - rand_num%3 - 1;
+			// fruity -= rand()%3 - 1;
 
         // fruitx=rand() % width;
         // fruity=rand() % height;
         ntail++;
-		return 5000;
+		return 500;
     }
 	return -5;
 }
@@ -383,6 +388,14 @@ float *forward(float *input, float *output, float w1[][n_hidden], float w2[][n_o
 		// activatiion
 		output[i] = 1 / (1 + exp(-output[i]));
 	}
+
+	float exp_sum = 0;
+	for(int i=0;i<n_output;i++)
+		exp_sum += exp(output[i]);
+
+	for(int i=0;i<n_output;i++)
+		output[i] = exp(output[i]) / exp_sum;
+
 	free(layer1);
 	return output;
 }
@@ -496,13 +509,84 @@ bool comp(neuralNetwork nn1, neuralNetwork nn2){
 	return nn1.reward > nn2.reward;
 }
 
+// input[0] = is front is blocked, input[1] = if right is blocked, input[2] = if left is blocked
+// input[3] = apple_x, input[4] = apple_y, input[5] = snake_x, input[6] = snake_y
 void set_input(float *input){
-	input[0] = x;
-	input[1] = y;
-	input[2] = tailx[ntail-1];
-	input[3] = taily[ntail-1];
-	input[4] = fruitx;
-	input[5] = fruity;
+	int right_wall = (x+1 > width) ? 1 : 0;
+	int left_wall = (x-1 < 0) ? 1 : 0;
+	int up_wall = (y-1 < 0) ? 1 : 0;
+	int down_wall = (y+1 > height) ? 1 : 0;
+
+	if(last_dir == UP){
+		input[0] = up_wall;
+		input[1] = right_wall;
+		input[2] = left_wall;
+	}
+	else if(last_dir == DOWN){
+		input[0] = down_wall;
+		input[1] = left_wall;
+		input[2] = right_wall;
+	}
+	else if(last_dir == RIGHT){
+		input[0] = right_wall;
+		input[1] = down_wall;
+		input[2] = up_wall;
+	}
+	else if(last_dir == LEFT){
+		input[0] = left_wall;
+		input[1] = up_wall;
+		input[2] = down_wall;
+	}
+	else if(last_dir == STOP){
+		input[0] = 0;
+		input[1] = 0;
+		input[2] = 0;
+	}
+
+	float min_value = INT16_MAX;
+	float max_value = INT16_MIN;
+
+	input[3] = fruitx;
+	if(input[3] < min_value)
+		min_value = input[3];
+	if(input[3] > max_value)
+		max_value = input[3];
+
+	input[4] = fruity;
+	if(input[4] < min_value)
+		min_value = input[4];
+	if(input[4] > max_value)
+		max_value = input[4];
+	
+	input[5] = x;
+	if(input[5] < min_value)
+		min_value = input[5];
+	if(input[5] > max_value)
+		max_value = input[5];
+
+	input[6] = y;
+	if(input[6] < min_value)
+		min_value = input[6];
+	if(input[6] > max_value)
+		max_value = input[6];
+
+	input[3] -= min_value;
+	input[3] /= max_value;
+
+	input[4] -= min_value;
+	input[4] /= max_value;
+
+	input[5] -= min_value;
+	input[5] /= max_value;
+
+	input[6] -= min_value;
+	input[6] /= max_value;
+	// input[0] = x;
+	// input[1] = y;
+	// input[2] = tailx[ntail-1];
+	// input[3] = taily[ntail-1];
+	// input[4] = fruitx;
+	// input[5] = fruity;
 }
 
 int main(){
@@ -535,9 +619,16 @@ int main(){
 
 	for(int k=0;k<generation_num;k++){
 		// cout<<"Generation number: "<<k<<endl;
+
+		// index of the best model
+		int best_index = 0;
+
+		// number of steps the snake can move
+		int total_steps = 200;
+		
 		// play game for the population
 		for(int i=0;i<population_size;i++){
-			// cout<<"population no: "<<i+1<<endl;
+			// cout<<"Population no: "<<i+1<<endl;
 
 			// setup the game before starting to play
 			setup();
@@ -545,32 +636,22 @@ int main(){
 			int total_reward = 0;
 			int reward = 0;
 			int steps = 0;
-			while(total_reward > -500 && !gameover){
-				if(i == 0){
-					draw(k);
-					usleep(100000);
-				}
+			while(!gameover){
+				// if(i == 0){
+				draw(k,i);
+				usleep(150000);
+				// }
 				// for(int i=0;i<n_input;i++)
 				// 	input[i] = (double) rand() / RAND_MAX;
 
 				// setting input
 				set_input(input);
 
-				// cout<<"input: ";
-				// for(int i=0;i<n_input;i++)
-				// 	cout<<input[i]<<" ";
-				// cout<<endl;
-
 				// float *output;
 				forward(input,output,nns[i].w1,nns[i].w2,nns[i].b1,nns[i].b2);
 
-				// cout<<"output: ";
-				// for(int i=0;i<n_output;i++)
-				// 	cout<<output[i]<<" ";
-				// cout<<endl;
-
 				int index = -1;
-				float max = INT8_MIN;
+				float max = INT16_MIN;
 				for(int j=0;j<n_output;j++){
 					if(output[j] > max){
 						max = output[j];
@@ -584,10 +665,9 @@ int main(){
 					dir = RIGHT;
 				else if(index == 2)
 					dir = UP;
-				else if(index == 3)
-					dir = DOWN;
+				// else if(index == 3)
+				// 	dir = DOWN;
 
-				// -1: dead, 0: live and didn't eat, 1: live and ate
 				reward = logic();
 
 				// last_dir = dir;
@@ -606,6 +686,12 @@ int main(){
 
 				// free(input);
 				// free(output);
+
+				if(reward > 0)
+					total_steps += 100;
+
+				if(steps > total_steps)
+					break;
 			}
 			if(i == 0)
 				cout<<"Generation: "<<k+1<<"\tReward: "<<total_reward<<"\tSteps: "<<steps<<endl;
@@ -615,6 +701,7 @@ int main(){
 				max_reward = total_reward;
 				max_steps = steps;
 				max_gen_num = k+1;
+				best_index = i;
 			}
 		}
 

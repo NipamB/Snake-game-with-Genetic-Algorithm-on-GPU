@@ -137,7 +137,7 @@ void draw()
     system("clear");
 
     for(int i =0; i<width+2;i++)
-        cout << FGRN("#"); 
+        cout << FGRN("+"); 
 
     cout<<endl;
 
@@ -146,7 +146,7 @@ void draw()
         for(int j=0; j<width;j++)
         {
             if(j == 0)
-                cout << FBLU("#"); 
+                cout << FBLU("+"); 
 
             if(i==y && j==x)
             {
@@ -177,13 +177,13 @@ void draw()
             }
 
             if(j==width-1)
-                cout << FRED("|");
+                cout << FRED("+");
         }
 
         cout<<endl;
     }
     for(int i = 0;i<width+2;i++)
-    cout << FBLU("-");
+    cout << FBLU("+");
 
     cout<<endl;
 
@@ -260,7 +260,7 @@ void logic()
             break;
     }
 
-    if(x> width || x<0 || y > height || y<0)
+    if(x >= width || x < 0 || y >= height || y < 0)
     {
         gameover=true;
         cout<<"GAME OVER"<<endl;

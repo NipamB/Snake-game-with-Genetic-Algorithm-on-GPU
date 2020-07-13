@@ -8,13 +8,13 @@
 using namespace std;
 
 // global varibales for model
-const int n_input = 7;
-const int n_output = 3;
+const int n_input = 8;
+const int n_output = 4;
 const int n_hidden = 50;
-const int population_size = 25;
+const int population_size = 1000;
 const float natural_selection_ratio = 0.2;
-const float mutation_rate = 0.05;
-const int generation_num = 50;
+const float mutation_rate = 0.01;
+const int generation_num = 200;
 
 static std::random_device __randomDevice;
 static std::mt19937 __randomGen(__randomDevice());
@@ -31,8 +31,8 @@ struct neuralNetwork{
 
 // global variables for game
 bool gameover;
-const int width=40;
-const int height=40;
+const int width=30;
+const int height=20;
 int x,y,fruitx,fruity,score;
 int tailx[100],taily[100];
 int ntail;
@@ -40,10 +40,10 @@ int ntail;
 
 enum edirection{STOP=0,LEFT,RIGHT,UP,DOWN};
 
-edirection dir;
+edirection dir, last_dir=STOP;
 
 // keep trach of last step
-edirection last_dir = STOP;
+// edirection last_dir = STOP;
 
 unsigned int microseconds = 10000;
 
@@ -87,32 +87,32 @@ void setup()
     y = height/2;
 
 	//testing fruit position
-	fruitx = x;
-	fruity = y;
-	if(rand()%2)
-		fruitx += rand()%3;
-	else
-		fruitx -= rand()%3;
+	// fruitx = x;
+	// fruity = y;
+	// if(rand()%2)
+	// 	fruitx += rand()%2;
+	// else
+	// 	fruitx -= rand()%2;
 	
-	if(rand()%2)
-		fruity += rand()%3;
-	else
-		fruity -= rand()%3;
+	// if(rand()%2)
+	// 	fruity += rand()%2;
+	// else
+	// 	fruity -= rand()%2;
 
-    // fruitx=rand() % width;
-    // fruity=rand() % height;
-	ntail = 0;
+    fruitx=rand() % width;
+    fruity=rand() % height;
+	ntail = 1;
     score = 0;
 }
 
 // display the game
-void draw(int gen_num, int pop_num)
+void draw(int gen_num, int pop_num, int first_score)
 {
 
     system("clear");
 
     for(int i =0; i<width+2;i++)
-        cout << FGRN("#"); 
+        cout << FGRN("+"); 
 
     cout<<endl;
 
@@ -121,7 +121,7 @@ void draw(int gen_num, int pop_num)
         for(int j=0; j<width;j++)
         {
             if(j == 0)
-                cout << FBLU("#"); 
+                cout << FBLU("+"); 
 
             if(i==y && j==x)
             {
@@ -152,20 +152,22 @@ void draw(int gen_num, int pop_num)
             }
 
             if(j==width-1)
-                cout << FRED("|");
+                cout << FRED("+");
         }
 
         cout<<endl;
     }
     for(int i = 0;i<width+2;i++)
-    cout << FBLU("-");
+    cout << FBLU("+");
 
     cout<<endl;
 
+	cout<<"Generation number: "<<gen_num+1<<"\tPopulation number: "<<pop_num<<endl;
+	cout<<"First score: "<<first_score<<endl;
+
     cout<< UNDL(FRED("Score:")) <<score<<"\t"<<endl; 
 
-    // cout<< FMAG("hi");
-	cout<<"Generartion number: "<<gen_num+1<<"\tPopulation number: "<<pop_num<<endl;
+    cout<< FMAG("hi");
     cout<<x<<" "<<y<<" : "<<fruitx<<" "<<fruity<<" : "<<tailx[ntail-1]<<" "<<taily[ntail-1]<<endl;
  
 }
@@ -193,77 +195,97 @@ int logic()
     switch(dir)
     {
         case LEFT:
-			if(last_dir == LEFT){
-				y++;
-				last_dir = DOWN;
-			}
-			else if(last_dir == RIGHT){
-				y--;
-				last_dir = UP;
-			}
-			else if(last_dir == UP){
-				x--;
-				last_dir = LEFT;
-			}
-			else if(last_dir == DOWN){
+			// if(last_dir == LEFT){
+			// 	y++;
+			// 	last_dir = DOWN;
+			// }
+			// else if(last_dir == RIGHT){
+			// 	y--;
+			// 	last_dir = UP;
+			// }
+			// else if(last_dir == UP){
+			// 	x--;
+			// 	last_dir = LEFT;
+			// }
+			// else if(last_dir == DOWN){
+			// 	x++;
+			// 	last_dir = RIGHT;
+			// }
+			// else if(last_dir == STOP){
+			// 	x--;
+			// 	last_dir = LEFT;
+			// }
+			if(last_dir == RIGHT)
 				x++;
-				last_dir = RIGHT;
-			}
-			else if(last_dir == STOP){
-				x--;
+			else{
+            	x--;
 				last_dir = LEFT;
 			}
-            // x--;
             break;
         case RIGHT:
-			if(last_dir == LEFT){
-				y--;
-				last_dir = RIGHT;
-			}
-			else if(last_dir == RIGHT){
-				y++;
-				last_dir = DOWN;
-			}
-			else if(last_dir == UP){
-				x++;
-				last_dir = RIGHT;
-			}
-			else if(last_dir == DOWN){
+			// if(last_dir == LEFT){
+			// 	y--;
+			// 	last_dir = RIGHT;
+			// }
+			// else if(last_dir == RIGHT){
+			// 	y++;
+			// 	last_dir = DOWN;
+			// }
+			// else if(last_dir == UP){
+			// 	x++;
+			// 	last_dir = RIGHT;
+			// }
+			// else if(last_dir == DOWN){
+			// 	x--;
+			// 	last_dir = LEFT;
+			// }
+			// else if(last_dir == STOP){
+			// 	x++;
+			// 	last_dir = RIGHT;
+			// }
+			if(last_dir == LEFT)
 				x--;
-				last_dir = LEFT;
-			}
-			else if(last_dir == STOP){
-				x++;
+			else{
+	            x++;
 				last_dir = RIGHT;
 			}
-            // x++;
             break;
         case UP:
-			if(last_dir == LEFT){
-				x--;
-				last_dir = LEFT;
-			}
-			else if(last_dir == RIGHT){
-				x++;
-				last_dir = RIGHT;
-			}
-			else if(last_dir == UP){
-				y--;
+			// if(last_dir == LEFT){
+			// 	x--;
+			// 	last_dir = LEFT;
+			// }
+			// else if(last_dir == RIGHT){
+			// 	x++;
+			// 	last_dir = RIGHT;
+			// }
+			// else if(last_dir == UP){
+			// 	y--;
+			// 	last_dir = UP;
+			// }
+			// else if(last_dir == DOWN){
+			// 	y++;
+			// 	last_dir = DOWN;
+			// }
+			// else if(last_dir == STOP){
+			// 	y--;
+			// 	last_dir = UP;
+			// }
+			if(last_dir == DOWN)
+				y++;
+			else{
+            	y--;
 				last_dir = UP;
 			}
-			else if(last_dir == DOWN){
-				y++;
+            break;
+        case DOWN:
+			if(last_dir == UP)
+				y--;
+			else{
+            	y++;
 				last_dir = DOWN;
 			}
-			else if(last_dir == STOP){
-				y--;
-				last_dir = UP;
-			}
-            // y--;
             break;
-        // case DOWN:
-        //     y++;
-        //     break;
     }
 
 	// if((dir == UP && last_dir == DOWN) || (dir == DOWN && last_dir == UP)){
@@ -275,11 +297,11 @@ int logic()
 	// 	return -150;
 	// }
 
-    if(x> width || x<0 || y > height || y<0)
+    if(x >= width || x < 0 || y >= height || y < 0)
     {
         gameover=true;
         // cout<<"GAME OVER"<<endl;
-		return -100;
+		return -150;
     }
 
     for(int i =0; i<ntail;i++)
@@ -288,7 +310,7 @@ int logic()
         {
             gameover = true;
             // cout<<"GAME OVER"<<endl;
-			return -100;
+			return -150;
         }
     }
 
@@ -297,29 +319,29 @@ int logic()
         score = score +500;
 
 		// testing fruit position
-		fruitx = x;
-		fruity = y;
-		int rand_num = rand();
-		if(rand_num%2)
-			fruitx = (fruitx + rand_num%3 + 1 > width) ? width : fruitx + rand_num%3 + 1;
-			// fruitx = rand()%3 + 1;
-		else
-			fruitx = (fruitx - rand_num%3 - 1 < 0) ? 0 : fruitx - rand_num%3 - 1;
-			// fruitx -= rand()%3 - 1;
+		// fruitx = x;
+		// fruity = y;
+		// int rand_num = rand();
+		// if(rand_num%2)
+		// 	fruitx = (fruitx + rand_num%2 + 1 > width) ? width : fruitx + rand_num%2 + 1;
+		// 	// fruitx = rand()%3 + 1;
+		// else
+		// 	fruitx = (fruitx - rand_num%2 - 1 < 0) ? 0 : fruitx - rand_num%2 - 1;
+		// 	// fruitx -= rand()%3 - 1;
 		
-		if(rand()%2)
-			fruity = (fruity + rand_num%3 + 1 > height) ? height : fruity + rand_num%3 + 1;
-			// fruity += rand()%3 + 1;
-		else
-			fruity = (fruity - rand_num%3 - 1 < 0) ? 0 : fruity - rand_num%3 - 1;
-			// fruity -= rand()%3 - 1;
+		// if(rand()%2)
+		// 	fruity = (fruity + rand_num%2 + 1 > height) ? height : fruity + rand_num%2 + 1;
+		// 	// fruity += rand()%3 + 1;
+		// else
+		// 	fruity = (fruity - rand_num%2 - 1 < 0) ? 0 : fruity - rand_num%2 - 1;
+		// 	// fruity -= rand()%3 - 1;
 
-        // fruitx=rand() % width;
-        // fruity=rand() % height;
+        fruitx=rand() % width;
+        fruity=rand() % height;
         ntail++;
 		return 500;
     }
-	return -5;
+	return 5;
 }
 
 
@@ -509,84 +531,27 @@ bool comp(neuralNetwork nn1, neuralNetwork nn2){
 	return nn1.reward > nn2.reward;
 }
 
-// input[0] = is front is blocked, input[1] = if right is blocked, input[2] = if left is blocked
-// input[3] = apple_x, input[4] = apple_y, input[5] = snake_x, input[6] = snake_y
+// input[0] = is up is blocked, input[1] = if right is blocked, input[2] = if left is blocked, input[3] = if down is blocked
+// input[4] = apple_x, input[5] = apple_y, input[6] = snake_x, input[7] = snake_y
 void set_input(float *input){
-	int right_wall = (x+1 > width) ? 1 : 0;
-	int left_wall = (x-1 < 0) ? 1 : 0;
-	int up_wall = (y-1 < 0) ? 1 : 0;
-	int down_wall = (y+1 > height) ? 1 : 0;
+	float right_wall = (x+1 >= width) ? width : 0;
+	float left_wall = (x-1 < 0) ? width : 0;
+	float up_wall = (y-1 < 0) ? width : 0;
+	float down_wall = (y+1 >= height) ? width : 0;
 
-	if(last_dir == UP){
-		input[0] = up_wall;
-		input[1] = right_wall;
-		input[2] = left_wall;
-	}
-	else if(last_dir == DOWN){
-		input[0] = down_wall;
-		input[1] = left_wall;
-		input[2] = right_wall;
-	}
-	else if(last_dir == RIGHT){
-		input[0] = right_wall;
-		input[1] = down_wall;
-		input[2] = up_wall;
-	}
-	else if(last_dir == LEFT){
-		input[0] = left_wall;
-		input[1] = up_wall;
-		input[2] = down_wall;
-	}
-	else if(last_dir == STOP){
-		input[0] = 0;
-		input[1] = 0;
-		input[2] = 0;
-	}
+	input[0] = up_wall;
+	input[1] = right_wall;
+	input[2] = left_wall;
+	input[3] = down_wall;
 
-	float min_value = INT16_MAX;
-	float max_value = INT16_MIN;
+	input[4] = fruitx*2;
+	input[5] = fruity*2;
 
-	input[3] = fruitx;
-	if(input[3] < min_value)
-		min_value = input[3];
-	if(input[3] > max_value)
-		max_value = input[3];
+	input[6] = x;
+	input[7] = y;
 
-	input[4] = fruity;
-	if(input[4] < min_value)
-		min_value = input[4];
-	if(input[4] > max_value)
-		max_value = input[4];
-	
-	input[5] = x;
-	if(input[5] < min_value)
-		min_value = input[5];
-	if(input[5] > max_value)
-		max_value = input[5];
-
-	input[6] = y;
-	if(input[6] < min_value)
-		min_value = input[6];
-	if(input[6] > max_value)
-		max_value = input[6];
-
-	input[3] -= min_value;
-	input[3] /= max_value;
-
-	input[4] -= min_value;
-	input[4] /= max_value;
-
-	input[5] -= min_value;
-	input[5] /= max_value;
-
-	input[6] -= min_value;
-	input[6] /= max_value;
-	// input[0] = x;
-	// input[1] = y;
-	// input[2] = tailx[ntail-1];
-	// input[3] = taily[ntail-1];
-	// input[4] = fruitx;
-	// input[5] = fruity;
+	for(int i=0;i<8;i++)
+		input[i] /= (float)width;
 }
 
 int main(){
@@ -616,6 +581,7 @@ int main(){
 	int max_reward = 0;
 	int max_steps = 0;
 	int max_gen_num = 0;
+	int first_score = 0;
 
 	for(int k=0;k<generation_num;k++){
 		// cout<<"Generation number: "<<k<<endl;
@@ -624,7 +590,7 @@ int main(){
 		int best_index = 0;
 
 		// number of steps the snake can move
-		int total_steps = 200;
+		int total_steps = 500;
 		
 		// play game for the population
 		for(int i=0;i<population_size;i++){
@@ -637,15 +603,21 @@ int main(){
 			int reward = 0;
 			int steps = 0;
 			while(!gameover){
-				// if(i == 0){
-				draw(k,i);
-				usleep(150000);
-				// }
+				if(i == 0){
+					draw(k,i,first_score);
+					usleep(150000);
+				}
 				// for(int i=0;i<n_input;i++)
 				// 	input[i] = (double) rand() / RAND_MAX;
 
 				// setting input
 				set_input(input);
+
+				if(i == 0){
+					for(int i=0;i<8;i++)
+						cout<<input[i]<<" ";
+					cout<<endl;
+				}
 
 				// float *output;
 				forward(input,output,nns[i].w1,nns[i].w2,nns[i].b1,nns[i].b2);
@@ -665,8 +637,8 @@ int main(){
 					dir = RIGHT;
 				else if(index == 2)
 					dir = UP;
-				// else if(index == 3)
-				// 	dir = DOWN;
+				else if(index == 3)
+					dir = DOWN;
 
 				reward = logic();
 
@@ -688,14 +660,17 @@ int main(){
 				// free(output);
 
 				if(reward > 0)
-					total_steps += 100;
+					total_steps += 300;
 
 				if(steps > total_steps)
 					break;
 			}
-			if(i == 0)
+			if(i == 0){
 				cout<<"Generation: "<<k+1<<"\tReward: "<<total_reward<<"\tSteps: "<<steps<<endl;
-			nns[i].reward = total_reward;
+				first_score = total_reward;
+			}
+			
+			nns[i].reward = total_reward + steps/10;
 
 			if(total_reward >= max_reward){
 				max_reward = total_reward;

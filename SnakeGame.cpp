@@ -7,7 +7,6 @@
 #include <stdio.h>     
 #include <stdlib.h>
 #include<ctime>
-#include<vector>
 using namespace std;
    
 
@@ -118,7 +117,6 @@ edirection dir;
 
 unsigned int microseconds = 10000;
 
-vector<int> global_score;
 
 void setup()
 {
@@ -198,33 +196,33 @@ void draw()
 
 void input()
 {
-    int num = rand();
-    if(num%4 == 0)
-        dir = LEFT;
-    else if(num%4 == 1)
-        dir = RIGHT;
-    else if(num%4 == 2)
-        dir = UP;
-    else if(num%4 == 3)
-        dir = DOWN;
-    // if (kbhit())
-    // {
-    //     switch (getch())
-    //     {
-    //         case 'a': 
-    //             dir = LEFT;
-    //             break;
-    //         case 'd': 
-    //             dir = RIGHT;
-    //             break;
-    //         case 'w':
-    //             dir = UP;
-    //             break;
-    //         case 's':
-    //             dir = DOWN;
-    //             break;
-    //     }
-    // }
+    // int num = rand();
+    // if(num%4 == 0)
+    //     dir = LEFT;
+    // else if(num%4 == 1)
+    //     dir = RIGHT;
+    // else if(num%4 == 2)
+    //     dir = UP;
+    // else if(num%4 == 3)
+    //     dir = DOWN;
+    if (kbhit())
+    {
+        switch (getch())
+        {
+            case 'a': 
+                dir = LEFT;
+                break;
+            case 'd': 
+                dir = RIGHT;
+                break;
+            case 'w':
+                dir = UP;
+                break;
+            case 's':
+                dir = DOWN;
+                break;
+        }
+    }
 }
 
 void logic()
@@ -291,21 +289,15 @@ void logic()
 
 int main()
 {  
-    for(int i=0;i<50;i++){
-        setup();
+    setup();
 
-        while(!gameover)
-        {
-            draw();
-            input();
-            sleep(0.1);
-            logic();
-        }
-        global_score.push_back(score);
+    while(!gameover)
+    {
+        draw();
+        input();
+        sleep(0.1);
+        logic();
     }
-
-    for(int i=0;i<global_score.size();i++)
-        cout<<global_score[i]<<endl;
 
     return 0;
 }

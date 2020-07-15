@@ -11,9 +11,9 @@ using namespace std;
 const int n_input = 24;
 const int n_output = 4;
 const int n_hidden = 50;
-const int population_size = 500;
-const float natural_selection_ratio = 0.4;
-const float mutation_rate = 0.05;
+const int population_size = 4096;
+const float natural_selection_ratio = 0.15;
+const float mutation_rate = 0.01;
 const int generation_num = 200;
 
 static std::random_device __randomDevice;
@@ -32,7 +32,7 @@ struct neuralNetwork{
 // global variables for game
 bool gameover;
 const int width=30;
-const int height=20;
+const int height=30;
 int x,y,fruitx,fruity,score;
 int tailx[100],taily[100];
 int ntail;
@@ -101,7 +101,7 @@ void setup()
 
     fruitx=rand() % width;
     fruity=rand() % height;
-	ntail = 2;
+	ntail = 0;
     score = 0;
 }
 
@@ -483,113 +483,112 @@ bool comp(neuralNetwork nn1, neuralNetwork nn2){
 }
 
 void set_input(float *input){
-	// float right_wall = (x+1 >= width) ? width : 0;
-	// float left_wall = (x-1 < 0) ? width : 0;
-	// float up_wall = (y-1 < 0) ? width : 0;
-	// float down_wall = (y+1 >= height) ? width : 0;
-
-	// input[0] = up_wall;
-	// input[1] = right_wall;
-	// input[2] = left_wall;
-	// input[3] = down_wall;
-
-	// input[4] = fruitx*2;
-	// input[5] = fruity*2;
-
-	// input[6] = x;
-	// input[7] = y;
-
-	// for(int i=0;i<8;i++)
-	// 	input[i] /= (float)width;
-
 	for(int i=0;i<24;i++)
-		input[i] = 0;
+		input[i] = height;
 	// check up direction
 	// check food
-	if(fruitx == x && fruity < y)
-		input[0] = 1;
+	if(fruitx == x && fruity < y){
+		input[0] = y-fruity;
+		input[0] /= height;
+	}
 	
 	// check body
 	for(int i=0;i<ntail;i++){
 		if(tailx[i] == x && taily[i] < y){
-			input[1] = 1;
+			input[1] = y-taily[i];
+			input[1] /= height;
 			break;
 		}
 	}
 
 	// check wall distance
-	if(y != 0)
-		input[2] = 1 / (float)y;
+	if(y != 0){
+		input[2] = (float)y / height;
+	}
 
 	// check down direction
 	// check food
-	if(fruitx == x && fruity > y)
-		input[3] = 1;
+	if(fruitx == x && fruity > y){
+		input[3] = fruity - y;
+		input[3] /= height;
+	}
 	
 	// check body
-// input[0] = is up is blocked, input[1] = if right is blocked, input[2] = if left is blocked, input[3] = if down is blocked
-// input[4] = apple_x, input[5] = apple_y, input[6] = snake_x, input[7] = snake_y
 	for(int i=0;i<ntail;i++){
 		if(tailx[i] == x && taily[i] > y){
-			input[4] = 1;
+			input[4] = taily[i] - y;
+			input[4] /= height;
 			break;
 		}
 	}
 
 	// check wall distance
-	if(height-y != 0)
-		input[5] = 1 / (float)(height-y);
+	if(height-y != 0){
+		input[5] = (float)(height-y) / height;
+	}
 
 	// check right direction
 	// check food
-	if(fruity == y && fruitx > x)
-		input[6] = 1;
+	if(fruity == y && fruitx > x){
+		input[6] = fruitx - x;
+		input[6] /= height;
+	}
 	
 	// check body
 	for(int i=0;i<ntail;i++){
 		if(taily[i] == y && tailx[i] > x){
-			input[7] = 1;
+			input[7] = tailx[i] -x;
+			input[7] /= height;
 			break;
 		}
 	}
 
 	// check wall distance
 	if(width-x != 0)
-		input[8] = 1 / (width-x);
+		input[8] = (float)(width-x) / height;
 
 	// check left direction
 	// check food
-	if(fruity == y && fruitx < x)
-		input[9] = 1;
+	if(fruity == y && fruitx < x){
+		input[9] = x - fruitx;
+		input[9] /= height;
+	}
 	
 	// check body
 	for(int i=0;i<ntail;i++){
 		if(taily[i] == y && tailx[i] < x){
-			input[10] = 1;
+			input[10] = x - tailx[i];
+			input[10] /= height;
 			break;
 		}
 	}
 
 	// check wall distance
 	if(x != 0)
-		input[11] = 1 / (float)x;
+		input[11] = (float)x / height;
 
 	//check north-east direction
 	int tempx = x, tempy = y;
 	bool found_food = false, found_body = false;
+	int min_value = 0;
+	float distance;
 
 	// check food and body
 	while(tempx < width && tempy > 0){
 		tempx++;
 		tempy--;
 		if(!found_food && tempx == fruitx && tempy == fruity){
-			input[12] = 1;
+			min_value = min(fruitx,fruity);
+			distance = sqrt(pow(min_value,2)*2);
+			input[12] = distance / height;
 			found_food = true;
 		}
 		if(!found_body){
 			for(int i=0;i<ntail;i++){
 				if(tempx == tailx[i] && tempy == taily[i]){
-					input[13] = 1;
+					min_value = min(tailx[i],taily[i]);
+					distance = sqrt(pow(min_value,2)*2);
+					input[13] = distance / height;
 					found_body = true;
 					break;
 				}
@@ -600,10 +599,10 @@ void set_input(float *input){
 	}
 
 	// check wall distance
-	int min_value = min(width-x,y);
-	float distance = sqrt(pow(min_value,2)*2);
+	min_value = min(width-x,y);
+	distance = sqrt(pow(min_value,2)*2);
 	if(distance != 0)
-		input[14] = 1 / distance; 
+		input[14] = distance / height; 
 
 	//check north-west direction
 	tempx = x, tempy = y;
@@ -614,13 +613,17 @@ void set_input(float *input){
 		tempx--;
 		tempy--;
 		if(!found_food && tempx == fruitx && tempy == fruity){
-			input[15] = 1;
+			min_value = min(fruitx,fruity);
+			distance = sqrt(pow(min_value,2)*2);
+			input[15] = distance / height;
 			found_food = true;
 		}
 		if(!found_body){
 			for(int i=0;i<ntail;i++){
 				if(tempx == tailx[i] && tempy == taily[i]){
-					input[16] = 1;
+					min_value = min(tailx[i],taily[i]);
+					distance = sqrt(pow(min_value,2)*2);
+					input[16] = distance / height;
 					found_body = true;
 					break;
 				}
@@ -634,7 +637,7 @@ void set_input(float *input){
 	min_value = min(x,y);
 	distance = sqrt(pow((min_value),2)*2);
 	if(distance != 0)
-		input[17] = 1 / distance; 
+		input[17] = distance / height; 
 
 	//check south-west direction
 	tempx = x, tempy = y;
@@ -645,13 +648,17 @@ void set_input(float *input){
 		tempx--;
 		tempy++;
 		if(!found_food && tempx == fruitx && tempy == fruity){
-			input[18] = 1;
+			min_value = min(fruitx,fruity);
+			distance = sqrt(pow(min_value,2)*2);
+			input[18] = distance / height;
 			found_food = true;
 		}
 		if(!found_body){
 			for(int i=0;i<ntail;i++){
 				if(tempx == tailx[i] && tempy == taily[i]){
-					input[19] = 1;
+					min_value = min(tailx[i],taily[i]);
+					distance = sqrt(pow(min_value,2)*2);
+					input[19] = distance / height;
 					found_body = true;
 					break;
 				}
@@ -665,7 +672,7 @@ void set_input(float *input){
 	min_value = min(x,height-y);
 	distance = sqrt(pow((min_value),2)*2);
 	if(distance != 0)
-		input[20] = 1 / distance;
+		input[20] = distance / height;
 
 	//check south-east direction
 	tempx = x, tempy = y;
@@ -676,13 +683,17 @@ void set_input(float *input){
 		tempx++;
 		tempy++;
 		if(!found_food && tempx == fruitx && tempy == fruity){
-			input[21] = 1;
+			min_value = min(fruitx,fruity);
+			distance = sqrt(pow(min_value,2)*2);
+			input[21] = distance / height;
 			found_food = true;
 		}
 		if(!found_body){
 			for(int i=0;i<ntail;i++){
 				if(tempx == tailx[i] && tempy == taily[i]){
-					input[22] = 1;
+					min_value = min(tailx[i],taily[i]);
+					distance = sqrt(pow(min_value,2)*2);
+					input[22] = distance / height;
 					found_body = true;
 					break;
 				}
@@ -696,7 +707,7 @@ void set_input(float *input){
 	min_value = min(width-x,height-y);
 	distance = sqrt(pow((min_value),2)*2);
 	if(distance != 0)
-		input[23] = 1 / distance;
+		input[23] = distance / height;
 }
 
 float calculate_fitness(int reward, int steps){
@@ -748,7 +759,7 @@ int main(){
 		int best_index = 0;
 
 		// number of steps the snake can move
-		int total_steps = 100;
+		int total_steps = 200;
 		
 		// play game for the population
 		for(int i=0;i<population_size;i++){
@@ -761,9 +772,11 @@ int main(){
 			int reward = 0;
 			int steps = 0;
 			while(!gameover){
-				if(i == 0){
-					draw(k,i,first_score,fitness_avg);
-					usleep(150000);
+				if(k > 150){
+					if(i == 0){
+						draw(k,i,first_score,fitness_avg);
+						usleep(150000);
+					}
 				}
 				// for(int i=0;i<n_input;i++)
 				// 	input[i] = (double) rand() / RAND_MAX;
@@ -821,7 +834,7 @@ int main(){
 				// free(output);
 
 				if(reward > 0)
-					total_steps = (total_steps+50 > 300) ? 300 : total_steps + 50;
+					total_steps = (total_steps+100 > 500) ? 500 : total_steps + 100;
 
 				if(steps > total_steps)
 					break;
@@ -831,9 +844,9 @@ int main(){
 				first_score = total_reward;
 			}
 			
-			nns[i].reward = calculate_fitness(total_reward,steps);
+			// nns[i].reward = calculate_fitness(total_reward,steps);
 
-			// nns[i].reward = total_reward + steps/10;
+			nns[i].reward = total_reward;
 
 			if(total_reward >= max_reward){
 				max_reward = total_reward;

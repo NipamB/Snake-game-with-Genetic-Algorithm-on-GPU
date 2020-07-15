@@ -8,12 +8,12 @@
 using namespace std;
 
 // global varibales for model
-const int n_input = 8;
+const int n_input = 24;
 const int n_output = 4;
 const int n_hidden = 50;
-const int population_size = 1000;
-const float natural_selection_ratio = 0.2;
-const float mutation_rate = 0.01;
+const int population_size = 500;
+const float natural_selection_ratio = 0.4;
+const float mutation_rate = 0.05;
 const int generation_num = 200;
 
 static std::random_device __randomDevice;
@@ -90,23 +90,23 @@ void setup()
 	// fruitx = x;
 	// fruity = y;
 	// if(rand()%2)
-	// 	fruitx += rand()%2;
+	// 	fruitx += rand()%3;
 	// else
-	// 	fruitx -= rand()%2;
+	// 	fruitx -= rand()%3;
 	
 	// if(rand()%2)
-	// 	fruity += rand()%2;
+	// 	fruity += rand()%3;
 	// else
-	// 	fruity -= rand()%2;
+	// 	fruity -= rand()%3;
 
     fruitx=rand() % width;
     fruity=rand() % height;
-	ntail = 1;
+	ntail = 2;
     score = 0;
 }
 
 // display the game
-void draw(int gen_num, int pop_num, int first_score)
+void draw(int gen_num, int pop_num, int first_score, float fitness_avg)
 {
 
     system("clear");
@@ -164,6 +164,7 @@ void draw(int gen_num, int pop_num, int first_score)
 
 	cout<<"Generation number: "<<gen_num+1<<"\tPopulation number: "<<pop_num<<endl;
 	cout<<"First score: "<<first_score<<endl;
+	cout<<"Fitness avg: "<<fitness_avg<<endl;
 
     cout<< UNDL(FRED("Score:")) <<score<<"\t"<<endl; 
 
@@ -173,7 +174,7 @@ void draw(int gen_num, int pop_num, int first_score)
 }
 
 // logic of the game
-int logic()
+int logic(int steps)
 {
 
     int prevx = tailx[0];
@@ -195,96 +196,40 @@ int logic()
     switch(dir)
     {
         case LEFT:
-			// if(last_dir == LEFT){
-			// 	y++;
-			// 	last_dir = DOWN;
-			// }
-			// else if(last_dir == RIGHT){
-			// 	y--;
-			// 	last_dir = UP;
-			// }
-			// else if(last_dir == UP){
-			// 	x--;
-			// 	last_dir = LEFT;
-			// }
-			// else if(last_dir == DOWN){
+			// if(last_dir == RIGHT)
 			// 	x++;
-			// 	last_dir = RIGHT;
-			// }
-			// else if(last_dir == STOP){
-			// 	x--;
+			// else{
+            // 	x--;
 			// 	last_dir = LEFT;
 			// }
-			if(last_dir == RIGHT)
-				x++;
-			else{
-            	x--;
-				last_dir = LEFT;
-			}
+			x--;
             break;
         case RIGHT:
-			// if(last_dir == LEFT){
-			// 	y--;
-			// 	last_dir = RIGHT;
-			// }
-			// else if(last_dir == RIGHT){
-			// 	y++;
-			// 	last_dir = DOWN;
-			// }
-			// else if(last_dir == UP){
-			// 	x++;
-			// 	last_dir = RIGHT;
-			// }
-			// else if(last_dir == DOWN){
+			// if(last_dir == LEFT)
 			// 	x--;
-			// 	last_dir = LEFT;
-			// }
-			// else if(last_dir == STOP){
-			// 	x++;
+			// else{
+	        //     x++;
 			// 	last_dir = RIGHT;
 			// }
-			if(last_dir == LEFT)
-				x--;
-			else{
-	            x++;
-				last_dir = RIGHT;
-			}
+			x++;
             break;
         case UP:
-			// if(last_dir == LEFT){
-			// 	x--;
-			// 	last_dir = LEFT;
-			// }
-			// else if(last_dir == RIGHT){
-			// 	x++;
-			// 	last_dir = RIGHT;
-			// }
-			// else if(last_dir == UP){
-			// 	y--;
-			// 	last_dir = UP;
-			// }
-			// else if(last_dir == DOWN){
+			// if(last_dir == DOWN)
 			// 	y++;
-			// 	last_dir = DOWN;
-			// }
-			// else if(last_dir == STOP){
-			// 	y--;
+			// else{
+            // 	y--;
 			// 	last_dir = UP;
 			// }
-			if(last_dir == DOWN)
-				y++;
-			else{
-            	y--;
-				last_dir = UP;
-			}
+			y--;
             break;
         case DOWN:
-			if(last_dir == UP)
-				y--;
-			else{
-            	y++;
-				last_dir = DOWN;
-			}
+			// if(last_dir == UP)
+			// 	y--;
+			// else{
+            // 	y++;
+			// 	last_dir = DOWN;
+			// }
+			y++;
             break;
     }
 
@@ -301,7 +246,7 @@ int logic()
     {
         gameover=true;
         // cout<<"GAME OVER"<<endl;
-		return -150;
+		return -1;
     }
 
     for(int i =0; i<ntail;i++)
@@ -310,38 +255,44 @@ int logic()
         {
             gameover = true;
             // cout<<"GAME OVER"<<endl;
-			return -150;
+			return -1;
         }
     }
 
     if(x==fruitx && y==fruity)
     {
-        score = score +500;
+        score = score + 500;
 
-		// testing fruit position
-		// fruitx = x;
-		// fruity = y;
-		// int rand_num = rand();
-		// if(rand_num%2)
-		// 	fruitx = (fruitx + rand_num%2 + 1 > width) ? width : fruitx + rand_num%2 + 1;
-		// 	// fruitx = rand()%3 + 1;
-		// else
-		// 	fruitx = (fruitx - rand_num%2 - 1 < 0) ? 0 : fruitx - rand_num%2 - 1;
-		// 	// fruitx -= rand()%3 - 1;
-		
-		// if(rand()%2)
-		// 	fruity = (fruity + rand_num%2 + 1 > height) ? height : fruity + rand_num%2 + 1;
-		// 	// fruity += rand()%3 + 1;
-		// else
-		// 	fruity = (fruity - rand_num%2 - 1 < 0) ? 0 : fruity - rand_num%2 - 1;
-		// 	// fruity -= rand()%3 - 1;
+		// if(steps < 300){
+		// 	// testing fruit position
+		// 	fruitx = x;
+		// 	fruity = y;
+		// 	int rand_num = rand();
+		// 	if(rand_num%2)
+		// 		fruitx = (fruitx + rand_num%3 + 1 > width) ? width : fruitx + rand_num%3 + 1;
+		// 		// fruitx = rand()%3 + 1;
+		// 	else
+		// 		fruitx = (fruitx - rand_num%3 - 1 < 0) ? 0 : fruitx - rand_num%3 - 1;
+		// 		// fruitx -= rand()%3 - 1;
+			
+		// 	if(rand()%2)
+		// 		fruity = (fruity + rand_num%3 + 1 > height) ? height : fruity + rand_num%3 + 1;
+		// 		// fruity += rand()%3 + 1;
+		// 	else
+		// 		fruity = (fruity - rand_num%3 - 1 < 0) ? 0 : fruity - rand_num%3 - 1;
+		// 		// fruity -= rand()%3 - 1;
+		// }
+		// else{
+		// 	fruitx=rand() % width;
+		// 	fruity=rand() % height;
+		// }
 
-        fruitx=rand() % width;
-        fruity=rand() % height;
-        ntail++;
-		return 500;
+		fruitx=rand() % width;
+		fruity=rand() % height;
+		ntail++;
+		return 1;
     }
-	return 5;
+	return 0;
 }
 
 
@@ -531,27 +482,233 @@ bool comp(neuralNetwork nn1, neuralNetwork nn2){
 	return nn1.reward > nn2.reward;
 }
 
+void set_input(float *input){
+	// float right_wall = (x+1 >= width) ? width : 0;
+	// float left_wall = (x-1 < 0) ? width : 0;
+	// float up_wall = (y-1 < 0) ? width : 0;
+	// float down_wall = (y+1 >= height) ? width : 0;
+
+	// input[0] = up_wall;
+	// input[1] = right_wall;
+	// input[2] = left_wall;
+	// input[3] = down_wall;
+
+	// input[4] = fruitx*2;
+	// input[5] = fruity*2;
+
+	// input[6] = x;
+	// input[7] = y;
+
+	// for(int i=0;i<8;i++)
+	// 	input[i] /= (float)width;
+
+	for(int i=0;i<24;i++)
+		input[i] = 0;
+	// check up direction
+	// check food
+	if(fruitx == x && fruity < y)
+		input[0] = 1;
+	
+	// check body
+	for(int i=0;i<ntail;i++){
+		if(tailx[i] == x && taily[i] < y){
+			input[1] = 1;
+			break;
+		}
+	}
+
+	// check wall distance
+	if(y != 0)
+		input[2] = 1 / (float)y;
+
+	// check down direction
+	// check food
+	if(fruitx == x && fruity > y)
+		input[3] = 1;
+	
+	// check body
 // input[0] = is up is blocked, input[1] = if right is blocked, input[2] = if left is blocked, input[3] = if down is blocked
 // input[4] = apple_x, input[5] = apple_y, input[6] = snake_x, input[7] = snake_y
-void set_input(float *input){
-	float right_wall = (x+1 >= width) ? width : 0;
-	float left_wall = (x-1 < 0) ? width : 0;
-	float up_wall = (y-1 < 0) ? width : 0;
-	float down_wall = (y+1 >= height) ? width : 0;
+	for(int i=0;i<ntail;i++){
+		if(tailx[i] == x && taily[i] > y){
+			input[4] = 1;
+			break;
+		}
+	}
 
-	input[0] = up_wall;
-	input[1] = right_wall;
-	input[2] = left_wall;
-	input[3] = down_wall;
+	// check wall distance
+	if(height-y != 0)
+		input[5] = 1 / (float)(height-y);
 
-	input[4] = fruitx*2;
-	input[5] = fruity*2;
+	// check right direction
+	// check food
+	if(fruity == y && fruitx > x)
+		input[6] = 1;
+	
+	// check body
+	for(int i=0;i<ntail;i++){
+		if(taily[i] == y && tailx[i] > x){
+			input[7] = 1;
+			break;
+		}
+	}
 
-	input[6] = x;
-	input[7] = y;
+	// check wall distance
+	if(width-x != 0)
+		input[8] = 1 / (width-x);
 
-	for(int i=0;i<8;i++)
-		input[i] /= (float)width;
+	// check left direction
+	// check food
+	if(fruity == y && fruitx < x)
+		input[9] = 1;
+	
+	// check body
+	for(int i=0;i<ntail;i++){
+		if(taily[i] == y && tailx[i] < x){
+			input[10] = 1;
+			break;
+		}
+	}
+
+	// check wall distance
+	if(x != 0)
+		input[11] = 1 / (float)x;
+
+	//check north-east direction
+	int tempx = x, tempy = y;
+	bool found_food = false, found_body = false;
+
+	// check food and body
+	while(tempx < width && tempy > 0){
+		tempx++;
+		tempy--;
+		if(!found_food && tempx == fruitx && tempy == fruity){
+			input[12] = 1;
+			found_food = true;
+		}
+		if(!found_body){
+			for(int i=0;i<ntail;i++){
+				if(tempx == tailx[i] && tempy == taily[i]){
+					input[13] = 1;
+					found_body = true;
+					break;
+				}
+			}
+		}
+		if(found_body && found_food)
+			break;
+	}
+
+	// check wall distance
+	int min_value = min(width-x,y);
+	float distance = sqrt(pow(min_value,2)*2);
+	if(distance != 0)
+		input[14] = 1 / distance; 
+
+	//check north-west direction
+	tempx = x, tempy = y;
+	found_food = false, found_body = false;
+
+	// check food and body
+	while(tempx > 0 && tempy > 0){
+		tempx--;
+		tempy--;
+		if(!found_food && tempx == fruitx && tempy == fruity){
+			input[15] = 1;
+			found_food = true;
+		}
+		if(!found_body){
+			for(int i=0;i<ntail;i++){
+				if(tempx == tailx[i] && tempy == taily[i]){
+					input[16] = 1;
+					found_body = true;
+					break;
+				}
+			}
+		}
+		if(found_body && found_food)
+			break;
+	}
+
+	// check wall distance
+	min_value = min(x,y);
+	distance = sqrt(pow((min_value),2)*2);
+	if(distance != 0)
+		input[17] = 1 / distance; 
+
+	//check south-west direction
+	tempx = x, tempy = y;
+	found_food = false, found_body = false;
+
+	// check food and body
+	while(tempx > 0 && tempy < height){
+		tempx--;
+		tempy++;
+		if(!found_food && tempx == fruitx && tempy == fruity){
+			input[18] = 1;
+			found_food = true;
+		}
+		if(!found_body){
+			for(int i=0;i<ntail;i++){
+				if(tempx == tailx[i] && tempy == taily[i]){
+					input[19] = 1;
+					found_body = true;
+					break;
+				}
+			}
+		}
+		if(found_body && found_food)
+			break;
+	}
+
+	// check wall distance
+	min_value = min(x,height-y);
+	distance = sqrt(pow((min_value),2)*2);
+	if(distance != 0)
+		input[20] = 1 / distance;
+
+	//check south-east direction
+	tempx = x, tempy = y;
+	found_food = false, found_body = false;
+
+	// check food and body
+	while(tempx < width && tempy < height){
+		tempx++;
+		tempy++;
+		if(!found_food && tempx == fruitx && tempy == fruity){
+			input[21] = 1;
+			found_food = true;
+		}
+		if(!found_body){
+			for(int i=0;i<ntail;i++){
+				if(tempx == tailx[i] && tempy == taily[i]){
+					input[22] = 1;
+					found_body = true;
+					break;
+				}
+			}
+		}
+		if(found_body && found_food)
+			break;
+	}
+
+	// check wall distance
+	min_value = min(width-x,height-y);
+	distance = sqrt(pow((min_value),2)*2);
+	if(distance != 0)
+		input[23] = 1 / distance;
+}
+
+float calculate_fitness(int reward, int steps){
+	if(reward < 5) {
+        return (steps * steps) * pow(2,reward); 
+    } 
+	else{
+        float fitness = floor(steps * steps);
+        fitness *= pow(2,5);
+        fitness *= (reward-9);
+		return fitness;
+    }
 }
 
 int main(){
@@ -582,6 +739,7 @@ int main(){
 	int max_steps = 0;
 	int max_gen_num = 0;
 	int first_score = 0;
+	float fitness_avg = 0;
 
 	for(int k=0;k<generation_num;k++){
 		// cout<<"Generation number: "<<k<<endl;
@@ -590,7 +748,7 @@ int main(){
 		int best_index = 0;
 
 		// number of steps the snake can move
-		int total_steps = 500;
+		int total_steps = 100;
 		
 		// play game for the population
 		for(int i=0;i<population_size;i++){
@@ -604,7 +762,7 @@ int main(){
 			int steps = 0;
 			while(!gameover){
 				if(i == 0){
-					draw(k,i,first_score);
+					draw(k,i,first_score,fitness_avg);
 					usleep(150000);
 				}
 				// for(int i=0;i<n_input;i++)
@@ -613,11 +771,11 @@ int main(){
 				// setting input
 				set_input(input);
 
-				if(i == 0){
-					for(int i=0;i<8;i++)
-						cout<<input[i]<<" ";
-					cout<<endl;
-				}
+				// if(i == 0){
+				// 	for(int i=0;i<8;i++)
+				// 		cout<<input[i]<<" ";
+				// 	cout<<endl;
+				// }
 
 				// float *output;
 				forward(input,output,nns[i].w1,nns[i].w2,nns[i].b1,nns[i].b2);
@@ -640,7 +798,10 @@ int main(){
 				else if(index == 3)
 					dir = DOWN;
 
-				reward = logic();
+				reward = logic(steps);
+
+				if(reward == -1)
+					break;
 
 				// last_dir = dir;
 
@@ -660,7 +821,7 @@ int main(){
 				// free(output);
 
 				if(reward > 0)
-					total_steps += 300;
+					total_steps = (total_steps+50 > 300) ? 300 : total_steps + 50;
 
 				if(steps > total_steps)
 					break;
@@ -670,7 +831,9 @@ int main(){
 				first_score = total_reward;
 			}
 			
-			nns[i].reward = total_reward + steps/10;
+			nns[i].reward = calculate_fitness(total_reward,steps);
+
+			// nns[i].reward = total_reward + steps/10;
 
 			if(total_reward >= max_reward){
 				max_reward = total_reward;
@@ -679,6 +842,10 @@ int main(){
 				best_index = i;
 			}
 		}
+
+		for(int i=0;i<population_size;i++)
+			fitness_avg += nns[i].reward;
+		fitness_avg /= population_size;
 
 		// cout<<nns.size()<<endl;
 		// find top nns
@@ -711,6 +878,7 @@ int main(){
 		}
 		// cout<<best_nn.reward<<endl;
 		nns_new.clear();
+		// cout<<"generation num: "<<k+1<<"\tfitness: "<<fitness_avg<<endl;
 	}
 
 	cout<<"Max reward: "<<max_reward<<endl;

@@ -101,7 +101,7 @@ void setup()
 
     fruitx=rand() % width;
     fruity=rand() % height;
-	ntail = 3;
+	ntail = 2;
     score = 0;
 }
 
@@ -374,6 +374,8 @@ float *forward(float *input, float *output, float w1[][n_hidden], float w2[][n_o
 }
 
 int selectParent(vector<struct neuralNetwork> nns, int reward_sum){
+	if(reward_sum == 0)
+		return 0;
 	int rand_num = rand() % reward_sum;
 	int sum = 0;
 	for(int i=0;i<nns.size();i++){
@@ -775,7 +777,7 @@ int main(){
 			int reward = 0;
 			int steps = 0;
 			while(!gameover){
-				if(k > 150){
+				if(k > 100){
 					if(i == 0){
 						draw(k,i,first_score,fitness_avg);
 						usleep(150000);

@@ -101,7 +101,7 @@ void setup()
 
     fruitx=rand() % width;
     fruity=rand() % height;
-	ntail = 0;
+	ntail = 3;
     score = 0;
 }
 
@@ -761,6 +761,9 @@ int main(){
 		// number of steps the snake can move
 		int total_steps = 200;
 		
+		max_reward = 0;
+		max_steps = 0;
+
 		// play game for the population
 		for(int i=0;i<population_size;i++){
 			// cout<<"Population no: "<<i+1<<endl;
@@ -840,7 +843,7 @@ int main(){
 					break;
 			}
 			if(i == 0){
-				cout<<"Generation: "<<k+1<<"\tReward: "<<total_reward<<"\tSteps: "<<steps<<endl;
+				// cout<<"Generation: "<<k+1<<"\tReward: "<<total_reward<<"\tSteps: "<<steps<<endl;
 				first_score = total_reward;
 			}
 			
@@ -859,6 +862,8 @@ int main(){
 		for(int i=0;i<population_size;i++)
 			fitness_avg += nns[i].reward;
 		fitness_avg /= population_size;
+
+		cout<<"Generation number: "<<k+1<<"\tFitness: "<<fitness_avg<<"\tBest reward: "<<max_reward<<"\tSteps: "<<max_steps<<endl;
 
 		// cout<<nns.size()<<endl;
 		// find top nns
@@ -885,7 +890,7 @@ int main(){
 
 			struct neuralNetwork child = crossover(parent1,parent2);
 
-			mutate(child);
+			// mutate(child);
 			
 			nns.push_back(child);
 		}

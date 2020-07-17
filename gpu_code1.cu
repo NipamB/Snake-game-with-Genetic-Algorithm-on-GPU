@@ -9,10 +9,11 @@
 using namespace std;
 
 #define ni 24
-#define nh 16
+#define nh 30
 #define no 4
-#define width 80
-#define height 80
+#define width 30
+#define height 20
+#define max_snake_length 100
 
 #define population_size 4096
 #define natural_selection_rate 0.15
@@ -272,7 +273,7 @@ __global__ void play_game(float *nns, int *fitness, unsigned int *random_int_fru
     // position of fruit
     int fruitx; 
     int fruity;
-    int fruit_index = 0; 
+    int fruit_index = snake_id * max_snake_length; 
 
     fruitx = random_int_fruitx[fruit_index] % width;
     fruity = random_int_fruity[fruit_index] % height;
@@ -280,9 +281,9 @@ __global__ void play_game(float *nns, int *fitness, unsigned int *random_int_fru
     fruit_index++;
 
     //snake length
-    int ntail = 2;
+    int ntail = 3;
 
-    int tailx[100], taily[100];
+    int tailx[max_snake_length], taily[max_snake_length];
 
     int total_steps = 200;
 	double total_reward = 0;
@@ -508,9 +509,9 @@ int main(){
     thrust::device_ptr<int> indices_ptr(dindices);
 
     unsigned int *random_int_fruitx;
-    cudaMalloc((void**) &random_int_fruitx,parameter_size*sizeof(int));
+    cudaMalloc((void**) &random_int_fruitx,population_size*max_snake_length*sizeof(int));
     unsigned int *random_int_fruity;
-    cudaMalloc((void**) &random_int_fruity,parameter_size*sizeof(int));
+    cudaMalloc((void**) &random_int_fruity,population_size*max_snake_length*sizeof(int));
 
     unsigned int *random_int_crossover1;
     cudaMalloc((void**) &random_int_crossover1,2*population_size*sizeof(int));

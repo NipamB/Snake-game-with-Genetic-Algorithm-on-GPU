@@ -9,15 +9,15 @@
 using namespace std;
 
 #define ni 24
-#define nh 30
+#define nh 16
 #define no 4
-#define width 30
-#define height 40
+#define width 80
+#define height 80
 
 #define population_size 4096
-#define natural_selection_rate 0.2
+#define natural_selection_rate 0.15
 #define mutation_rate 0.01
-#define generations 500
+#define generations 300
 
 __global__ void myprint(float *nns, int size){
     int x = 5*(ni*nh+nh+nh*no+no);
@@ -243,7 +243,7 @@ __device__ float forward(float input[], float weight[], float bias[], int len_i,
 }
 
 __global__ void play_game(float *nns, int *fitness, unsigned int *random_int_fruitx, unsigned int *random_int_fruity,
-                        int parameter_size, int gen){
+                        int parameter_size){
 
     // int id = blockIdx.x * blockDim.x + threadIdx.x;
     int snake_id = blockIdx.x;
@@ -401,12 +401,12 @@ __global__ void play_game(float *nns, int *fitness, unsigned int *random_int_fru
 
     if(parameter_id == 0){
         fitness[snake_id] = total_reward;
-        if(gen == 2 && snake_id == 5){
-            fitness[snake_id] = 2;
-        }
+        // if(gen == 2 && snake_id == 5){
+        //     fitness[snake_id] = 2;
+        // }
     }
 
-    __syncthreads();
+    // __syncthreads();
 
     // if(id == 0){
     //     for(int i=0;i<population_size;i++)
@@ -543,7 +543,7 @@ int main(){
         curandGenerate(prng,random_int_fruitx,parameter_size);
         curandGenerate(prng,random_int_fruity,parameter_size);
         
-        play_game<<<population_size,parameter_size,parameter_size*sizeof(float)>>>(dnns,dfitness,random_int_fruitx,random_int_fruity,parameter_size,k);
+        play_game<<<population_size,parameter_size,parameter_size*sizeof(float)>>>(dnns,dfitness,random_int_fruitx,random_int_fruity,parameter_size);
         
         cudaMemcpy(fitness,dfitness,population_size*sizeof(int),cudaMemcpyDeviceToHost);
         

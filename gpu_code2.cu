@@ -20,6 +20,10 @@ using namespace std;
 #define natural_selection_rate 0.2
 #define mutation_rate 0.01
 #define generations 300
+#define negative_reward -150
+#define positive_reward 500
+#define max_total_steps 500
+#define threshold_view_game 50
 
 ////////////////////////////////////////////////
 //for color
@@ -344,9 +348,6 @@ __global__ void play_game(float *nns, float *fitness, unsigned int *random_int_f
     __shared__ float hidden_output[nh];
     __shared__ float output[no];
 
-    int reward_value;
-    reward_value = 500;
-
     __shared__ int break_flag;
     break_flag = 0;
     
@@ -484,7 +485,7 @@ __global__ void play_game(float *nns, float *fitness, unsigned int *random_int_f
 
             if(x >= width || x < 0 || y >= height || y < 0)
             {
-                reward = -150;
+                reward = negative_reward;
                 break_flag = 1;
             }
 
@@ -492,7 +493,7 @@ __global__ void play_game(float *nns, float *fitness, unsigned int *random_int_f
             {
                 if(tailx[i]==x && taily[i]==y)
                 {
-                    reward = -150;
+                    reward = negative_reward;
                     break_flag = 1;
                 }
             }
@@ -503,8 +504,7 @@ __global__ void play_game(float *nns, float *fitness, unsigned int *random_int_f
                 fruity = random_int_fruity[fruit_index] % height;
                 fruit_index++;
                 ntail++;
-                reward = reward_value;
-                // reward_value *= 2;
+                reward = positive_reward;
             }
             
             total_reward += reward;
@@ -519,7 +519,7 @@ __global__ void play_game(float *nns, float *fitness, unsigned int *random_int_f
             reward = 0;
 
             if(reward > 0)
-                total_steps = (total_steps+100 > 500) ? 500 : total_steps + 100;
+                total_steps = (total_steps+100 > max_total_steps) ? max_total_steps : total_steps + 100;
 
             if(steps > total_steps){
                 break_flag = 1;
@@ -1231,7 +1231,7 @@ int main(){
 
         // cudaDeviceSynchronize();
 
-        if(k > 50)
+        if(k > threshold_view_game)
         view_game(best_snake);
         
         int top = population_size * natural_selection_rate;

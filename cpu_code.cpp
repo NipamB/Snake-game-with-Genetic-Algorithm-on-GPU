@@ -10,11 +10,13 @@ using namespace std;
 // global varibales for model
 const int n_input = 24;
 const int n_output = 4;
-const int n_hidden = 50;
-const int population_size = 4096;
+const int n_hidden = 100;
+const int population_size = 7000;
 const float natural_selection_ratio = 0.15;
 const float mutation_rate = 0.01;
-const int generation_num = 200;
+const int generation_num = 500;
+const int display_generation_num = 550;
+const int max_total_steps = 500;
 
 static std::random_device __randomDevice;
 static std::mt19937 __randomGen(__randomDevice());
@@ -775,7 +777,7 @@ int main(){
 			int reward = 0;
 			int steps = 0;
 			while(!gameover){
-				if(k > 150){
+				if(k > display_generation_num){
 					if(i == 0){
 						draw(k,i,first_score,fitness_avg);
 						usleep(150000);
@@ -837,7 +839,7 @@ int main(){
 				// free(output);
 
 				if(reward > 0)
-					total_steps = (total_steps+100 > 500) ? 500 : total_steps + 100;
+					total_steps = (total_steps+100 > max_total_steps) ? max_total_steps : total_steps + 100;
 
 				if(steps > total_steps)
 					break;

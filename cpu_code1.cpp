@@ -4,6 +4,7 @@
 #include<vector>
 #include<random>
 #include<unistd.h>
+#include<fstream>
 
 using namespace std;
 
@@ -14,7 +15,7 @@ const int n_hidden = 20;
 const int population_size = 4096;
 const float natural_selection_ratio = 0.2;
 const float mutation_rate = 0.01;
-const int generation_num = 300;
+const int generation_num = 150;
 const int max_snake_length = 100;
 const int positive_reward = 500;
 const int negative_reward = -150;
@@ -46,41 +47,7 @@ enum edirection{STOP=0,LEFT,RIGHT,UP,DOWN};
 
 edirection dir, last_dir=STOP, dir_next;
 
-// keep trach of last step
-// edirection last_dir = STOP;
-
-unsigned int microseconds = 10000;
-
 ////////// game code /////////
-
-//for color
-
-
-#ifndef _COLORS_
-#define _COLORS_
-
-/* FOREGROUND */
-#define RST  "\x1B[0m"
-#define KRED  "\x1B[31m"
-#define KGRN  "\x1B[32m"
-#define KYEL  "\x1B[33m"
-#define KBLU  "\x1B[34m"
-#define KMAG  "\x1B[35m"
-#define KCYN  "\x1B[36m"
-#define KWHT  "\x1B[37m"
-
-#define FRED(x) KRED x RST
-#define FGRN(x) KGRN x RST
-#define FYEL(x) KYEL x RST
-#define FBLU(x) KBLU x RST
-#define FMAG(x) KMAG x RST
-#define FCYN(x) KCYN x RST
-#define FWHT(x) KWHT x RST
-
-#define BOLD(x) "\x1B[1m" x RST
-#define UNDL(x) "\x1B[4m" x RST
-
-#endif  /* _COLORS_ */
 
 // initialise variables to start the game
 void setup()
@@ -91,91 +58,10 @@ void setup()
     x = width/2;
     y = height/2;
 
-	//testing fruit position
-	// fruitx = x;
-	// fruity = y;
-	// if(rand()%2)
-	// 	fruitx += rand()%3;
-	// else
-	// 	fruitx -= rand()%3;
-	
-	// if(rand()%2)
-	// 	fruity += rand()%3;
-	// else
-	// 	fruity -= rand()%3;
-
     fruitx=rand() % width;
     fruity=rand() % height;
 	ntail = 3;
     score = 0;
-}
-
-// display the game
-void draw(int gen_num, int pop_num, int first_score, float fitness_avg)
-{
-
-    system("clear");
-
-    for(int i =0; i<width+2;i++)
-        cout << FGRN("+"); 
-
-    cout<<endl;
-
-    for(int i=0;i<height;i++)
-    {
-        for(int j=0; j<width;j++)
-        {
-            if(j == 0)
-                cout << FBLU("+"); 
-
-            if(i==y && j==x)
-            {
-                cout << FGRN("0");
-            }
-
-            else if(i == fruity && j == fruitx)
-            {
-                cout << FGRN("*"); 
-            }
-            
-            else
-            {
-                bool print = false;
-                for(int k =0;k < ntail;k++)
-                {
-                    if(tailx[k] == j && taily[k] ==i)
-                    {
-                        cout<<FWHT("o"); 
-                        print = true;
-                    }
-                }
-                if(!print)
-                {
-                    cout<<" ";
-                }
-
-            }
-
-            if(j==width-1)
-                cout << FRED("+");
-        }
-
-        cout<<endl;
-    }
-    for(int i = 0;i<width+2;i++)
-    cout << FBLU("+");
-
-    cout<<endl;
-
-	cout<<"Generation number: "<<gen_num+1<<"\tPopulation number: "<<pop_num<<endl;
-	cout<<"First score: "<<first_score<<endl;
-	cout<<"Fitness avg: "<<fitness_avg<<endl;
-
-    cout<< UNDL(FRED("Score:")) <<score<<"\t"<<endl; 
-
-    cout<< FMAG("hi");
-    cout<<x<<" "<<y<<" : "<<fruitx<<" "<<fruity<<" : "<<tailx[ntail-1]<<" "<<taily[ntail-1]<<endl;
- 
 }
 
 // logic of the game
@@ -664,20 +550,17 @@ void set_input(float *input){
         input[23] = 1 / distance;
 }
 
-float calculate_fitness(int reward, int steps){
-	if(reward < 5) {
-        return (steps * steps) * pow(2,reward); 
-    } 
-	else{
-        float fitness = floor(steps * steps);
-        fitness *= pow(2,5);
-        fitness *= (reward-9);
-		return fitness;
-    }
-}
-
 int main(){
 	srand(time(0));
+
+	ofstream fout;
+	fout.open("output.txt");
+
+	fout<<"n_input\t\t"<<n_input<<endl;
+    fout<<"n_hidden\t"<<n_hidden<<endl;
+    fout<<"n_output\t"<<n_output<<endl;
+    fout<<"height\t\t"<<height<<endl;
+    fout<<"width\t\t"<<width<<endl;
 
 	// initial population
 	vector<struct neuralNetwork> nns;
@@ -705,6 +588,9 @@ int main(){
 	int max_gen_num = 0;
 	int first_score = 0;
 	float fitness_avg = 0;
+	float max_fitness_avg = 0;
+	float global_max_reward = 0;
+	int global_max_generation = 0;
 
 	for(int k=0;k<generation_num;k++){
 		// cout<<"Generation number: "<<k<<endl;
@@ -729,25 +615,13 @@ int main(){
 			int reward = 0;
 			int steps = 0;
 			while(!gameover){
-				if(k > threshold_view_game){
-					if(i == 0){
-						draw(k,i,first_score,fitness_avg);
-						usleep(150000);
-					}
-				}
-				// for(int i=0;i<n_input;i++)
-				// 	input[i] = (double) rand() / RAND_MAX;
-
-				// setting input
+				// if(k > threshold_view_game){
+				// 	if(i == 0){
+				// 		draw(k,i,first_score,fitness_avg);
+				// 		usleep(150000);
+				// 	}
 				set_input(input);
 
-				// if(i == 0){
-				// 	for(int i=0;i<8;i++)
-				// 		cout<<input[i]<<" ";
-				// 	cout<<endl;
-				// }
-
-				// float *output;
 				forward(input,output,nns[i].w1,nns[i].w2,nns[i].b1,nns[i].b2);
 
 				int index = -1;
@@ -790,24 +664,11 @@ int main(){
 
 				last_dir = dir;
 
-				// int num = rand();
-				// if(num % 20 == 0)
-				// 	reward = -1;
-				// else if(num % 20 == 1 || num % 20 == 2)
-				// 	reward = 1;
-				// else
-				// 	reward = 0;
-
 				total_reward += reward;
 				steps += 1;
 
 				if(reward < 0)
 					break;
-					
-				// cout<<total_reward<<" "<<steps<<endl;
-
-				// free(input);
-				// free(output);
 
 				if(reward > 0)
 					total_steps = (total_steps+100 > 500) ? 500 : total_steps + 100;
@@ -827,11 +688,15 @@ int main(){
 			if(nns[i].reward >= max_reward){
 				max_reward = nns[i].reward;
 				max_steps = steps;
-				max_gen_num = k+1;
 				best_index = i;
 			}
 		}
 
+		if(max_reward > global_max_reward){
+			global_max_reward = max_reward;
+			global_max_generation = k+1;
+		}
+		
 		for(int i=0;i<population_size;i++)
 			fitness_avg += nns[i].reward;
 		fitness_avg /= population_size;
@@ -842,7 +707,10 @@ int main(){
 		// find top nns
 		sort(nns.begin(),nns.end(),comp);
 
-		best_nn = nns[0];
+		if(fitness_avg >= max_fitness_avg){
+			max_fitness_avg = fitness_avg;
+			best_nn = nns[0];
+		}
 
 		int top_nns = population_size * natural_selection_ratio;
 		int reward_sum = 0;
@@ -872,9 +740,26 @@ int main(){
 		// cout<<"generation num: "<<k+1<<"\tfitness: "<<fitness_avg<<endl;
 	}
 
-	cout<<"Max reward: "<<max_reward<<endl;
-	cout<<"No of steps: "<<max_steps<<endl;
-	cout<<"Generation num: "<<max_gen_num<<endl;
+	fout<<"Best neural network parameters:\n";
+	for(int i=0;i<n_input;i++)
+		for(int j=0;j<n_hidden;j++)
+			fout<<best_nn.w1[i][j]<<" ";
+
+	for(int i=0;i<n_hidden;i++)
+		fout<<best_nn.b1[i]<<" ";
+
+	for(int i=0;i<n_hidden;i++)
+		for(int j=0;j<n_output;j++)
+			fout<<best_nn.w2[i][j]<<" ";
+
+	for(int i=0;i<n_output;i++)
+		fout<<best_nn.b2[i]<<" ";
+	
+	fout<<endl;
+	fout.close();
+	
+	cout<<"Max reward: "<<global_max_reward<<endl;
+	cout<<"Generation num: "<<global_max_generation<<endl;
 
 	return 0;
 }

@@ -242,16 +242,16 @@ float *forward(float *input, float *output, float w1[][n_hidden], float w2[][n_o
 		output[i] += b2[i];
 
 		// sigmoid activatiion
-		// output[i] = 1 / (1 + exp(-output[i]));
+		output[i] = 1 / (1 + exp(-output[i]));
 	}
 
 	// softmax activation on the output layer
-	float exp_sum = 0;
-	for(int i=0;i<n_output;i++)
-		exp_sum += exp(output[i]);
+	// float exp_sum = 0;
+	// for(int i=0;i<n_output;i++)
+	// 	exp_sum += exp(output[i]);
 
-	for(int i=0;i<n_output;i++)
-		output[i] = exp(output[i]) / exp_sum;
+	// for(int i=0;i<n_output;i++)
+	// 	output[i] = exp(output[i]) / exp_sum;
 
 	free(layer1);
 	return output;

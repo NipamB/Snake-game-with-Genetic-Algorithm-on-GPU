@@ -36,6 +36,7 @@ using namespace std;
 
 ////////////////////////////////////////////////
 
+// global  variables
 int play_number = 5;
 
 int n_input = 24;
@@ -54,20 +55,34 @@ int ntail;
 int steps;
 int max_steps = 1000;
 
-
+// setup to start the game
 void setup(){
+    // flag to exit game
     gameover=false;
+    
+    // next direction to be taken
     dir = 0;
     dir_next = 0;
+
+    // head of the snake
     x = width/2;
     y = height/2;
+
+    // location of the fruit
     fruitx=rand() % width;
     fruity=rand() % height;
+
+    // size of the snake
     ntail = 3;
+
+    // score of the game
     score = 0;
+
+    // number of steps taken by the snake
     steps = 0;
 }
 
+// display the game on screen
 void draw(){
 
     system("clear");
@@ -130,6 +145,7 @@ void draw(){
  
 }
 
+// set input for forward pass
 void set_input(float *input){
 	for(int i=0;i<n_input;i++)
         input[i] = 0;
@@ -327,8 +343,10 @@ void set_input(float *input){
         input[23] = 1 / distance;
 }
 
+// forward pass to calculate the output
 void forward(float *input, float *output, float*w1,
             float *w2, float *b1, float *b2){
+    // forward pass for first layer
     float *layer1 = (float *)malloc(n_hidden*sizeof(float));
     for(int i=0;i<n_hidden;i++){
         layer1[i] = 0;
@@ -341,10 +359,7 @@ void forward(float *input, float *output, float*w1,
         layer1[i] = 1 / (1 + exp(-layer1[i]));
     }
 
-    // for(int i=0;i<nh;i++)
-    //     cout<<layer1[i]<<" ";
-    // cout<<endl;
-
+    // forward pass for second layer and thus get the output layer
     for(int i=0;i<n_output;i++){
         output[i] = 0;
         for(int j=0;j<n_hidden;j++){
@@ -356,30 +371,28 @@ void forward(float *input, float *output, float*w1,
         output[i] = 1 / (1 + exp(-output[i]));
     }
 
-    // for(int i=0;i<no;i++)  
-    //     cout<<output[i]<<" ";
-    // cout<<endl;
-
     free(layer1);
 }
 
+// get the next direction based on the output
 void get_direction(float parameters[]){
+    // parameters of the neural network
     float *w1 = &parameters[0];
     float *b1 = &parameters[n_input*n_hidden];
     float *w2 = &parameters[n_input*n_hidden+n_hidden];
     float *b2 = &parameters[n_input*n_hidden+n_hidden+n_hidden*n_output];
 
+    // input to neural network
     float *input = (float *)malloc(n_input*sizeof(float));
     set_input(input);
 
+    // output of neural network
     float *output = (float *)malloc(n_output*sizeof(float));
 
+    // do forward pass to get the output
     forward(input,output,w1,w2,b1,b2);
 
-    // for(int i=0;i<no;i++)
-    //     cout<<output[i]<<" ";
-    // cout<<endl;
-
+    // get the best direction based on output
     int index = -1;
     float max = INT16_MIN;
     for(int j=0;j<n_output;j++){
@@ -391,6 +404,7 @@ void get_direction(float parameters[]){
 
     dir = index + 1;
 
+    // get the second best direction based on output
     int index1 = -1;
     float max1 = INT16_MIN;
     for(int j=0;j<n_output;j++){
@@ -406,8 +420,9 @@ void get_direction(float parameters[]){
     free(output);
 }
 
+// logic of the game
 void logic(){
-
+    // update the snake body
     int prevx = tailx[0];
     int prevy = taily[0];
     int prev2x, prev2y;
@@ -424,6 +439,7 @@ void logic(){
         prevy = prev2y;
     }
 
+    // move the snake based on direction
     switch(dir)
     {
         case 1:
@@ -478,12 +494,14 @@ void logic(){
 
     last_dir = dir;
 
+    // snake hit the wall
     if(x >= width || x < 0 || y >= height || y < 0)
     {
         gameover=true;
         cout<<"GAME OVER"<<endl;
     }
 
+    // snake hit its body
     for(int i =0; i<ntail;i++)
     {
         if(tailx[i]==x && taily[i]==y)
@@ -493,6 +511,7 @@ void logic(){
         }
     }
 
+    // snake eat the fruit
     if(x==fruitx && y==fruity)
     {
         score = score + 1;
@@ -504,6 +523,9 @@ void logic(){
 
 int main()
 {  
+    // srand(time(NULL));
+
+    // read parameter values of the best neural network from file
     ifstream fin;
     fin.open("output.txt");
 
@@ -544,9 +566,12 @@ int main()
             nn[i] = stof(line);
     }
     
+    // play the game 'play_number' of times
     for(int i=0;i<play_number;i++){
+        // setup to start the game
         setup();
 
+        // loop till the game is not over
         while(!gameover && steps < max_steps)
         {
             draw();

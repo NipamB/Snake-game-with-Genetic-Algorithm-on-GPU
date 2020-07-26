@@ -21,10 +21,12 @@ const int positive_reward = 500;
 const int negative_reward = -150;
 const int threshold_view_game = 300;
 
+// random number generator for normal distribution
 static std::random_device __randomDevice;
 static std::mt19937 __randomGen(__randomDevice());
 static std::normal_distribution<float> __normalDistribution(0.5, 1);
 
+// structure for neural network
 struct neuralNetwork{
 	float w1[n_input][n_hidden];
 	float w2[n_hidden][n_output];
@@ -42,32 +44,42 @@ int x,y,fruitx,fruity,score;
 int tailx[max_snake_length],taily[max_snake_length];
 int ntail;
 
-
 enum edirection{STOP=0,LEFT,RIGHT,UP,DOWN};
 
 edirection dir, last_dir=STOP, dir_next;
+
 
 ////////// game code /////////
 
 // initialise variables to start the game
 void setup()
 {
+	// flag to exit the game
     gameover=false;
+
+	// direction to be taken next
     dir = STOP;
 	dir_next = STOP;
+
+	// head of the snake
     x = width/2;
     y = height/2;
 
+	// position of fruit 
     fruitx=rand() % width;
     fruity=rand() % height;
+
+	// size of the snake
 	ntail = 3;
+
+	// game score
     score = 0;
 }
 
 // logic of the game
 int logic(int steps)
 {
-
+	// update values of the snake body
     int prevx = tailx[0];
     int prevy = taily[0];
     int prev2x, prev2y;
@@ -84,6 +96,7 @@ int logic(int steps)
         prevy = prev2y;
     }
 
+	// move the snake based on the direction
     switch(dir)
     {
         case LEFT:
@@ -136,23 +149,24 @@ int logic(int steps)
 			break;
     }
 
+	// snake hits the wall
     if(x >= width || x < 0 || y >= height || y < 0)
     {
         gameover=true;
-        // cout<<"GAME OVER"<<endl;
 		return negative_reward;
     }
 
+	// snake hits its body
     for(int i =0; i<ntail;i++)
     {
         if(tailx[i]==x && taily[i]==y)
         {
             gameover = true;
-            // cout<<"GAME OVER"<<endl;
 			return negative_reward;
         }
     }
 
+	// snake eats the fruit
     if(x==fruitx && y==fruity)
     {
         score = score + 500;
@@ -161,12 +175,14 @@ int logic(int steps)
 		ntail++;
 		return positive_reward;
     }
+
 	return 0;
 }
 
 
 ////////// model code ////////
 
+// initialise the neural network with random values
 void initialise_network(float w1[][n_hidden], float w2[][n_output],
 						float b1[], float b2[]){
 
@@ -203,7 +219,7 @@ void initialise_network(float w1[][n_hidden], float w2[][n_output],
 float *forward(float *input, float *output, float w1[][n_hidden], float w2[][n_output],
 						float b1[], float b2[]){
 
-	// layer1
+	// forward pass for first layer
 	float *layer1;
 	layer1 = (float *)malloc(n_hidden*sizeof(float));
 	for(int i=0;i<n_hidden;i++){
@@ -213,13 +229,11 @@ float *forward(float *input, float *output, float w1[][n_hidden], float w2[][n_o
 		}
 		layer1[i] += b1[i];
 
-		// activatiion
+		// sigmoid activatiion
 		layer1[i] = 1 / (1 + exp(-layer1[i]));
 	}
 
-	// output layer
-	// float *output;
-	// output = (float *)malloc(n_output*sizeof(float));
+	// forward pass for second layer and thus get the output layer
 	for(int i=0;i<n_output;i++){
 		output[i] = 0;
 		for(int j=0;j<n_hidden;j++){
@@ -227,10 +241,11 @@ float *forward(float *input, float *output, float w1[][n_hidden], float w2[][n_o
 		}
 		output[i] += b2[i];
 
-		// activatiion
-		output[i] = 1 / (1 + exp(-output[i]));
+		// sigmoid activatiion
+		// output[i] = 1 / (1 + exp(-output[i]));
 	}
 
+	// softmax activation on the output layer
 	float exp_sum = 0;
 	for(int i=0;i<n_output;i++)
 		exp_sum += exp(output[i]);
@@ -242,6 +257,7 @@ float *forward(float *input, float *output, float w1[][n_hidden], float w2[][n_o
 	return output;
 }
 
+// select parent based on Roulette Wheel Selection method
 int selectParent(vector<struct neuralNetwork> nns, int reward_sum){
 	if(reward_sum == 0)
 		return 0;
@@ -255,6 +271,7 @@ int selectParent(vector<struct neuralNetwork> nns, int reward_sum){
 	return 0;
 }
 
+// crossover two parent neural networks to generate new child neural network
 struct neuralNetwork crossover(struct neuralNetwork parent1,
 								struct neuralNetwork parent2){
 	struct neuralNetwork child;
@@ -303,6 +320,7 @@ struct neuralNetwork crossover(struct neuralNetwork parent1,
 	return child;
 }
 
+// mutate neural network based on mutation rate
 void mutate(struct neuralNetwork &nn){
 	for(int i=0;i<n_input;i++){
 		for(int j=0;j<n_hidden;j++){
@@ -349,10 +367,13 @@ void mutate(struct neuralNetwork &nn){
 	}
 }
 
+// comparator function used for sorting neural networks
 bool comp(neuralNetwork nn1, neuralNetwork nn2){
 	return nn1.reward > nn2.reward;
 }
 
+// set input for foward pass, input size is 24 i.e it check in all 8 directions
+// for food, its body and wall
 void set_input(float *input){
 	for(int i=0;i<n_input;i++)
     input[i] = 0;
@@ -553,9 +574,11 @@ void set_input(float *input){
 int main(){
 	srand(time(0));
 
+	// write parameters of best neural network into file
 	ofstream fout;
 	fout.open("output.txt");
 
+	// write model parameter values into file
 	fout<<"n_input\t\t"<<n_input<<endl;
     fout<<"n_hidden\t"<<n_hidden<<endl;
     fout<<"n_output\t"<<n_output<<endl;
@@ -566,6 +589,7 @@ int main(){
 	vector<struct neuralNetwork> nns;
 	vector<struct neuralNetwork> nns_new;
 
+	// initialise all the neural networks with random values
 	for(int i=0;i<population_size;i++){
 		struct neuralNetwork nn;
 		initialise_network(nn.w1,nn.w2,nn.b1,nn.b2);
@@ -573,6 +597,7 @@ int main(){
 		nns.push_back(nn);
 	}
 
+	// stores the parameters of best neural network
 	neuralNetwork best_nn = nns[0];
 
 	// input to neural network
@@ -583,6 +608,7 @@ int main(){
 	float *output;
 	output = (float *)malloc(n_output*sizeof(float));
 
+	// local variables
 	int max_reward = 0;
 	int max_steps = 0;
 	int max_gen_num = 0;
@@ -592,9 +618,8 @@ int main(){
 	float global_max_reward = 0;
 	int global_max_generation = 0;
 
+	// loop for number of generations
 	for(int k=0;k<generation_num;k++){
-		// cout<<"Generation number: "<<k<<endl;
-
 		// index of the best model
 		int best_index = 0;
 
@@ -606,24 +631,22 @@ int main(){
 
 		// play game for the population
 		for(int i=0;i<population_size;i++){
-			// cout<<"Population no: "<<i+1<<endl;
-
 			// setup the game before starting to play
 			setup();
 
 			int total_reward = 0;
 			int reward = 0;
 			int steps = 0;
+
+			// loop while game is not over i.e sanke is not dead
 			while(!gameover){
-				// if(k > threshold_view_game){
-				// 	if(i == 0){
-				// 		draw(k,i,first_score,fitness_avg);
-				// 		usleep(150000);
-				// 	}
+				// set the input to neural network
 				set_input(input);
 
+				// do forward pass to get the output 
 				forward(input,output,nns[i].w1,nns[i].w2,nns[i].b1,nns[i].b2);
 
+				// get the best direction based on output
 				int index = -1;
 				float max = INT16_MIN;
 				for(int j=0;j<n_output;j++){
@@ -633,6 +656,7 @@ int main(){
 					}
 				}
 
+				// set the direction
 				if(index == 0)
 					dir = LEFT;
 				else if(index == 1)
@@ -642,6 +666,7 @@ int main(){
 				else if(index == 3)
 					dir = DOWN;
 
+				// get the second best direction based on output
 				int index1 = -1;
 				float max1 = INT16_MIN;
 				for(int j=0;j<n_output;j++){
@@ -651,6 +676,7 @@ int main(){
 					}
 				}
 
+				// set the second best direction
 				if(index1 == 0)
 					dir_next = LEFT;
 				else if(index1 == 1)
@@ -660,8 +686,10 @@ int main(){
 				else if(index1 == 3)
 					dir_next = DOWN;
 
+				// get the reward based on the move
 				reward = logic(steps);
 
+				// update varibales
 				last_dir = dir;
 
 				total_reward += reward;
@@ -670,21 +698,18 @@ int main(){
 				if(reward < 0)
 					break;
 
+				// update total number of steps the snake can move
 				if(reward > 0)
 					total_steps = (total_steps+100 > 500) ? 500 : total_steps + 100;
 
 				if(steps > total_steps)
 					break;
 			}
-			if(i == 0){
-				// cout<<"Generation: "<<k+1<<"\tReward: "<<total_reward<<"\tSteps: "<<steps<<endl;
-				first_score = total_reward + steps;
-			}
 			
-			// nns[i].reward = calculate_fitness(total_reward,steps);
-
+			// set the fitness score
 			nns[i].reward = total_reward + steps;
 
+			// calculate the best fitness score in the population
 			if(nns[i].reward >= max_reward){
 				max_reward = nns[i].reward;
 				max_steps = steps;
@@ -692,27 +717,32 @@ int main(){
 			}
 		}
 
+		// calculate the best fitness score among all the generations
 		if(max_reward > global_max_reward){
 			global_max_reward = max_reward;
 			global_max_generation = k+1;
 		}
 		
+		// calculate average fitness score
 		for(int i=0;i<population_size;i++)
 			fitness_avg += nns[i].reward;
 		fitness_avg /= population_size;
 
 		cout<<"Generation number: "<<k+1<<"\tAverage Fitness: "<<fitness_avg<<"\tMax reward: "<<max_reward<<endl;
 
-		// cout<<nns.size()<<endl;
-		// find top nns
+		// sort the neural networks based on fitness score
 		sort(nns.begin(),nns.end(),comp);
 
+		// set the best neural network based on average fitness score
 		if(fitness_avg >= max_fitness_avg){
 			max_fitness_avg = fitness_avg;
 			best_nn = nns[0];
 		}
 
+		// number of neural networks selected for next generation from current generation
 		int top_nns = population_size * natural_selection_ratio;
+		
+		// calculate sum of fitness score which will be used to select parent during crossover
 		int reward_sum = 0;
 		for(int i=0;i<top_nns;i++){
 			nns_new.push_back(nns[i]);
@@ -723,23 +753,29 @@ int main(){
 		for(int i=0;i<top_nns;i++)
 			nns.push_back(nns_new[i]);
 
+		// do crossover and mutation for the rest of the population using Roulette Wheel Selection method
 		for(int i=0;i<population_size-top_nns;i++){
+			// select parent 1
 			int index1 = selectParent(nns_new,reward_sum);
 			neuralNetwork parent1 = nns_new[index1];
+
+			// select parent 2
 			int index2 = selectParent(nns_new,reward_sum);
 			neuralNetwork parent2 = nns_new[index2];
 
+			// crossover parent 1 and parent 2 to generate the child neural network
 			struct neuralNetwork child = crossover(parent1,parent2);
 
-			// mutate(child);
+			// mutate the child based on mutation rate 
+			mutate(child);
 			
 			nns.push_back(child);
 		}
-		// cout<<best_nn.reward<<endl;
+
 		nns_new.clear();
-		// cout<<"generation num: "<<k+1<<"\tfitness: "<<fitness_avg<<endl;
 	}
 
+	// write parameters of best neural network into file
 	fout<<"Best neural network parameters:\n";
 	for(int i=0;i<n_input;i++)
 		for(int j=0;j<n_hidden;j++)

@@ -523,11 +523,11 @@ void logic(){
 
 int main()
 {  
-    // srand(time(NULL));
+    srand(time(NULL));
 
     // read parameter values of the best neural network from file
     ifstream fin;
-    fin.open("output.txt");
+    fin.open("best_output.txt");
 
     string line;
     fin>>line;

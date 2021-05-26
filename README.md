@@ -13,4 +13,10 @@ nvcc -o train_gpu gpu_code.cu -lcurand
 ./train_gpu
 ```
 
+The parameters of the best Neural Network model will be stored in output.txt
 
+Watch the trained model in action:
+```
+g++ -o snake run_snake.cpp
+./snake output.txt
+```

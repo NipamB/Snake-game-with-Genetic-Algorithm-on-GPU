@@ -521,13 +521,13 @@ void logic(){
     }
 }
 
-int main()
+int main(int argc, char **argv)
 {  
     srand(time(NULL));
 
     // read parameter values of the best neural network from file
     ifstream fin;
-    fin.open("best_output.txt");
+    fin.open(argv[1]);
 
     string line;
     fin>>line;

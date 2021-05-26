@@ -34,3 +34,7 @@
 check.cu
 
 /generation_time/*
+
+train_cpu
+train_gpu
+snake

@@ -20,3 +20,4 @@ Watch the trained model in action:
 g++ -o snake run_snake.cpp
 ./snake output.txt
 ```
+![video](https://github.com/NipamB/Snake-game-with-Genetic-Algorithm-on-GPU/edit/master/snake_video.mp4)
